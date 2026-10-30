@@ -1,0 +1,97 @@
+// i18n: DE + EN. Struktur so aufgebaut, dass weitere Sprachen einfach ergänzt werden können.
+export type Locale = 'de' | 'en';
+
+export const translations = {
+  de: {
+    app_name: 'ProMA – Problem Melde App',
+    nav_map: 'Karte',
+    nav_list: 'Liste',
+    nav_report: 'Melden',
+    // Melden-Formular
+    report_title: 'Problem melden',
+    report_photo: 'Foto aufnehmen / hochladen',
+    report_photo_hint: 'Keine Personen oder Kennzeichen fotografieren — Gesichter werden automatisch verpixelt.',
+    report_title_label: 'Titel',
+    report_title_placeholder: 'z.B. Zufahrt zum Kindergarten zugeparkt',
+    report_desc_label: 'Beschreibung',
+    report_desc_placeholder: 'Was ist das Problem? Wo genau? (keine Personen erwähnen)',
+    report_location: 'Standort',
+    report_location_auto: 'GPS-Standort verwenden',
+    report_area: 'Gebiet / Ortsteil',
+    report_area_placeholder: 'z.B. Mitte',
+    report_preview_warning: 'Achtung: Diese Meldung wird ÖFFENTLICH veröffentlicht und ist für alle sichtbar!',
+    report_privacy_note: 'Personenbezogene Inhalte werden automatisch geprüft und abgelehnt.',
+    report_submit: 'Veröffentlichen',
+    report_submit_checking: 'Wird geprüft …',
+    report_success: 'Meldung veröffentlicht! Danke!',
+    report_rejected: 'Meldung abgelehnt:',
+    // Liste/Karte
+    list_title: 'Meldungen',
+    filter_area: 'Gebiet filtern',
+    filter_open: 'Nur offene',
+    sort_score: 'Wichtigkeit',
+    sort_new: 'Neueste',
+    sort_votes: 'Meiste Votes',
+    vote_up: 'Stört mich auch',
+    vote_down: 'Kein Problem',
+    vote_done: 'Stimmt, ist erledigt',
+    resolve_photo: 'Erledigt-Foto hochladen',
+    resolved_badge: 'Erledigt',
+    score_label: 'Wichtigkeit',
+    flag_button: 'Melden (personenbezogen?)',
+    flag_reason_prompt: 'Warum ist diese Meldung problematisch? (optional)',
+    flag_success: 'Danke, die Meldung wurde zur Prüfung gemeldet.',
+    loading: 'Lädt …',
+    error_generic: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.',
+    no_reports: 'Noch keine Meldungen. Sei der Erste!',
+    geolocation_error: 'Standort konnte nicht ermittelt werden — bitte manuell wählen.'
+  },
+  en: {
+    app_name: 'ProMA – Problem Reporting App',
+    nav_map: 'Map',
+    nav_list: 'List',
+    nav_report: 'Report',
+    report_title: 'Report a problem',
+    report_photo: 'Take / upload photo',
+    report_photo_hint: 'Do not photograph people or license plates — faces are blurred automatically.',
+    report_title_label: 'Title',
+    report_title_placeholder: 'e.g. Kindergarten entrance blocked by parking',
+    report_desc_label: 'Description',
+    report_desc_placeholder: "What's the problem? Where exactly? (no personal references)",
+    report_location: 'Location',
+    report_location_auto: 'Use GPS location',
+    report_area: 'Area / district',
+    report_area_placeholder: 'e.g. Mitte',
+    report_preview_warning: 'Warning: this report will be published PUBLICLY and visible to everyone!',
+    report_privacy_note: 'Personal content is automatically checked and rejected.',
+    report_submit: 'Publish',
+    report_submit_checking: 'Checking …',
+    report_success: 'Report published! Thank you!',
+    report_rejected: 'Report rejected:',
+    list_title: 'Reports',
+    filter_area: 'Filter by area',
+    filter_open: 'Open only',
+    sort_score: 'Importance',
+    sort_new: 'Newest',
+    sort_votes: 'Most votes',
+    vote_up: 'Bothers me too',
+    vote_down: 'Not a problem',
+    vote_done: 'Yes, it is resolved',
+    resolve_photo: 'Upload resolution photo',
+    resolved_badge: 'Resolved',
+    score_label: 'Importance',
+    flag_button: 'Flag (personal data?)',
+    flag_reason_prompt: 'Why is this report problematic? (optional)',
+    flag_success: 'Thanks, the report has been flagged for review.',
+    loading: 'Loading …',
+    error_generic: 'Something went wrong. Please try again.',
+    no_reports: 'No reports yet. Be the first!',
+    geolocation_error: 'Could not determine location — please choose manually.'
+  }
+} as const;
+
+export type TranslationKey = keyof typeof translations.de;
+
+export function t(locale: Locale, key: TranslationKey): string {
+  return translations[locale][key];
+}
