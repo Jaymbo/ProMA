@@ -12,3 +12,10 @@ services:
       # Daten außerhalb des Containers – überleben Rebuilds/Neustarts
       - ./data:/app/data
       - ./uploads:/app/uploads
+    networks:
+      - default
+      - matrix-net # Cloudflare-Tunnel (cloudflared) erreicht uns unter http://proma:3000
+
+networks:
+  matrix-net:
+    external: true
