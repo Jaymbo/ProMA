@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import type * as Leaflet from 'leaflet';
   import { t } from '#lib/i18n/index.svelte';
   import { getClientId } from '#lib/client/identity';
   import { autoBlurFaces, applyManualBlurs } from '#lib/client/image';
   import { checkText } from '#lib/client/textcheck';
+  import MapPicker from '#lib/client/MapPicker.svelte';
 
   let fileInput = $state<HTMLInputElement | null>(null);
   let originalFile: File | null = $state(null);
@@ -18,36 +17,6 @@
   let lat = $state<number | null>(null);
   let lon = $state<number | null>(null);
   let geoStatus = $state<'idle' | 'loading' | 'ok' | 'error'>('idle');
-
-  // Karte im Formular: Klick setzt/verschiebt den Marker
-  let pickMapEl = $state<HTMLDivElement | null>(null);
-  let pickMap: Leaflet.Map | null = null;
-  let pickMarker: Leaflet.Marker | null = null;
-
-  onMount(async () => {
-    const L = (await import('leaflet')).default;
-    if (!pickMapEl) return;
-    pickMap = L.map(pickMapEl).setView([51.1657, 10.4515], 6);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(pickMap);
-
-    pickMap.on('click', (e: Leaflet.LeafletMouseEvent) => {
-      lat = e.latlng.lat;
-      lon = e.latlng.lng;
-      if (pickMarker) {
-        pickMarker.setLatLng(e.latlng);
-      } else {
-        pickMarker = L.marker(e.latlng, { draggable: true }).addTo(pickMap!);
-        pickMarker.on('dragend', () => {
-          const p = pickMarker!.getLatLng();
-          lat = p.lat;
-          lon = p.lng;
-        });
-      }
-      geoStatus = 'ok';
-    });
-  });
 
   let textCheck = $state<{ ok: boolean; reason?: string } | null>(null);
   let checking = $state(false);
@@ -219,27 +188,40 @@
     <p class="hint">{t('report_photo_hint')}</p>
 
     {#if previewUrl}
-      <div class="preview-wrap">
-        <img
-          src={previewUrl}
-          alt="Vorschau"
-          onmousedown={onPreviewMouseDown}
-          onmouseup={onPreviewMouseUp}
-        />
-        <div class="blur-overlay">
-          {#each blurRegions as r}
-            <div class="blur-rect" style="left:{r.x}%; top:{r.y}%; width:{r.width}%; height:{r.height}%"></div>
-          {/each}
+      <div class="preview-card">
+        <p class="preview-label">{t('report_preview_label')}</p>
+        <div class="preview-wrap">
+          <img
+            src={previewUrl}
+            alt="Vorschau"
+            onmousedown={onPreviewMouseDown}
+            onmouseup={onPreviewMouseUp}
+          />
+          <div class="blur-overlay">
+            {#each blurRegions as r}
+              <div class="blur-rect" style="left:{r.x}%; top:{r.y}%; width:{r.width}%; height:{r.height}%"></div>
+            {/each}
+          </div>
         </div>
+        <h3>{title || t('report_title_label')}</h3>
+        <p class="preview-desc">{description || t('report_desc_placeholder')}</p>
+        <p class="meta">
+          {#if lat !== null && lon !== null}
+            📍 {lat.toFixed(4)}, {lon.toFixed(4)}
+          {:else}
+            📍 {t('report_location_required')}
+          {/if}
+          · {t('score_label')}: 0 · 👍 0 👎 0
+        </p>
+        <p class="hint">
+          {facesBlurred > 0
+            ? `${facesBlurred} Gesicht(er) automatisch verpixelt${modelUsed ? '' : ' (Modell nicht verfügbar)'}.`
+            : 'Tipp: Zum Verpixeln von Kennzeichen ein Rechteck auf dem Foto aufziehen.'}
+        </p>
+        <button type="button" onclick={processPhoto} disabled={checking}>
+          {checking ? t('report_submit_checking') : 'Gesichter verpixeln / Vorschau aktualisieren'}
+        </button>
       </div>
-      <p class="hint">
-        {facesBlurred > 0
-          ? `${facesBlurred} Gesicht(er) automatisch verpixelt${modelUsed ? '' : ' (Modell nicht verfügbar)'}.`
-          : 'Tipp: Zum Verpixeln von Kennzeichen ein Rechteck auf dem Foto aufziehen.'}
-      </p>
-      <button type="button" onclick={processPhoto} disabled={checking}>
-        {checking ? t('report_submit_checking') : 'Gesichter verpixeln / Vorschau aktualisieren'}
-      </button>
     {/if}
 
     <label>
@@ -254,18 +236,13 @@
 
     <fieldset>
       <legend>{t('report_location')}</legend>
-      <div bind:this={pickMapEl} class="pick-map"></div>
-      <p class="hint">{t('report_location_pick')}</p>
       <button type="button" onclick={useGps} disabled={geoStatus === 'loading'}>
         {geoStatus === 'loading' ? '…' : t('report_location_auto')}
       </button>
-      {#if geoStatus === 'ok'}
-        <p class="hint">
-          {t('report_location_set')} {lat?.toFixed(5)}, {lon?.toFixed(5)}
-        </p>
-      {:else if geoStatus === 'error'}
+      {#if geoStatus === 'error'}
         <p class="error">{t('geolocation_error')}</p>
       {/if}
+      <MapPicker bind:lat bind:lon />
     </fieldset>
 
     {#if rejectedReason}
@@ -305,10 +282,27 @@
     border: 1px solid var(--border);
     border-radius: 6px;
   }
-  .pick-map {
-    height: 320px;
-    border-radius: 6px;
+  .preview-card {
+    background: #fff;
     border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    max-width: 400px;
+  }
+  .preview-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin: 0 0 0.5rem;
+  }
+  .preview-desc {
+    margin: 0.25rem 0;
+  }
+  .preview-card .meta {
+    color: var(--muted);
+    font-size: 0.85rem;
   }
   .preview-wrap {
     position: relative;

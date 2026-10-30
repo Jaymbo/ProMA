@@ -35,7 +35,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE).then((c) => c.put(event.request, copy));
           return res;
         })
-        .catch(() => caches.match(event.request))
+        .catch(() => caches.match(event.request).then((r) => r ?? new Response('', { status: 504 })))
     );
     return;
   }

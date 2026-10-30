@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type * as Leaflet from 'leaflet';
+  import { loadLeaflet } from '#lib/client/map';
   import { t } from '#lib/i18n/index.svelte';
   import type { ReportDto } from '#lib/shared/types';
 
@@ -11,10 +12,8 @@
   let selected = $state<ReportDto | null>(null);
 
   onMount(async () => {
-    // Leaflet nur im Browser laden (SSR-kompatibel)
-    const L = (await import('leaflet')).default;
-    await import('leaflet/dist/leaflet.css');
-
+    // Leaflet nur im Browser laden (SSR-kompatibel), inkl. Icon-Fixes
+    const L = await loadLeaflet();
     map = L.map(mapEl!).setView([51.1657, 10.4515], 6); // Deutschland-Zentrierung als Start
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
