@@ -93,8 +93,11 @@
   }
 </script>
 
-<h1>{t('list_title')}</h1>
+<svelte:head>
+  <title>{t('app_name')}</title>
+</svelte:head>
 
+<h1>{t('list_title')}</h1>
 <div class="filters">
   <label class="checkbox">
     <input type="checkbox" bind:checked={openOnly} />
@@ -108,7 +111,19 @@
 </div>
 
 {#if loading}
-  <p>{t('loading')}</p>
+  <ul class="reports" aria-hidden="true">
+    {#each Array(4) as _}
+      <li class="skeleton">
+        <div class="sk-img"></div>
+        <div class="body">
+          <div class="sk-line sk-title"></div>
+          <div class="sk-line"></div>
+          <div class="sk-line sk-short"></div>
+          <div class="sk-line sk-short"></div>
+        </div>
+      </li>
+    {/each}
+  </ul>
 {:else if error}
   <p class="error">{error}</p>
 {:else if reports.length === 0}
@@ -215,6 +230,39 @@
   }
   .actions button.flag {
     color: var(--danger);
+  }
+  .skeleton {
+    pointer-events: none;
+  }
+  .sk-img {
+    width: 160px;
+    height: 120px;
+    border-radius: 6px;
+    background: #e8eaed;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  .sk-line {
+    height: 0.85rem;
+    border-radius: 4px;
+    background: #e8eaed;
+    margin-bottom: 0.5rem;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  .sk-title {
+    width: 55%;
+    height: 1.1rem;
+  }
+  .sk-short {
+    width: 35%;
+  }
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.55;
+    }
   }
   .error {
     color: var(--danger);

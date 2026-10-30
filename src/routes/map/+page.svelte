@@ -33,10 +33,20 @@
   });
 </script>
 
+<svelte:head>
+  <title>{t('nav_map')} – ProMA</title>
+</svelte:head>
+
 <h1>{t('nav_map')}</h1>
 
 <div class="layout">
   <div bind:this={mapEl} class="map"></div>
+  {#if !loading && reports.length === 0}
+    <div class="empty">
+      <p>{t('no_reports')}</p>
+      <a href="/report" class="cta-link">{t('nav_report')}</a>
+    </div>
+  {/if}
   {#if selected}
     <aside>
       <button class="close" onclick={() => (selected = null)}>×</button>
@@ -96,5 +106,29 @@
     border-radius: 4px;
     padding: 0.1rem 0.4rem;
     font-size: 0.8rem;
+  }
+  .empty {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 2rem;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    z-index: 1001;
+  }
+  .empty p {
+    margin: 0 0 0.75rem;
+  }
+  .cta-link {
+    display: inline-block;
+    background: #1a73e8;
+    color: #fff;
+    text-decoration: none;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
   }
 </style>

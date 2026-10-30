@@ -174,6 +174,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>{t('report_title')} – ProMA</title>
+</svelte:head>
+
 <h1>{t('report_title')}</h1>
 
 {#if success}
