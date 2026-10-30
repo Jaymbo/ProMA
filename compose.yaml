@@ -6,6 +6,8 @@ services:
     environment:
       - PORT=3000
       - HOST=0.0.0.0
+      # Fotos bis ~10 MB erlauben (MAX_IMAGE_BYTES ist 8 MB)
+      - BODY_SIZE_LIMIT=12M
     ports:
       - "3210:3000"
     volumes:
