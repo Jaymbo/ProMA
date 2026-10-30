@@ -3,7 +3,8 @@
 
 const self = globalThis as unknown as ServiceWorkerGlobalScope;
 
-const CACHE = 'proma-v1';
+// Bei jedem Deployment die Version erhöhen, damit Clients die neue Shell laden!
+const CACHE = 'proma-v2';
 const SHELL = ['/', '/report', '/map', '/manifest.json'];
 
 self.addEventListener('install', (event) => {
@@ -24,5 +25,20 @@ self.addEventListener('fetch', (event) => {
   // API und Uploads: immer live (frische Daten)
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/uploads/')) return;
   if (event.request.method !== 'GET') return;
+  // Navigationen (Seiten): network-first, Cache nur als Offline-Fallback
+  // -> nach Deployments sehen Clients sofort die neue Version
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(event.request, copy));
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+  // Statische Assets: cache-first
   event.respondWith(caches.match(event.request).then((cached) => cached ?? fetch(event.request)));
 });
