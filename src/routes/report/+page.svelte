@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import type * as Leaflet from 'leaflet';
   import { t } from '#lib/i18n/index.svelte';
   import { getClientId } from '#lib/client/identity';
   import { autoBlurFaces, applyManualBlurs } from '#lib/client/image';
@@ -13,10 +15,39 @@
 
   let title = $state('');
   let description = $state('');
-  let area = $state('');
   let lat = $state<number | null>(null);
   let lon = $state<number | null>(null);
   let geoStatus = $state<'idle' | 'loading' | 'ok' | 'error'>('idle');
+
+  // Karte im Formular: Klick setzt/verschiebt den Marker
+  let pickMapEl = $state<HTMLDivElement | null>(null);
+  let pickMap: Leaflet.Map | null = null;
+  let pickMarker: Leaflet.Marker | null = null;
+
+  onMount(async () => {
+    const L = (await import('leaflet')).default;
+    if (!pickMapEl) return;
+    pickMap = L.map(pickMapEl).setView([51.1657, 10.4515], 6);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(pickMap);
+
+    pickMap.on('click', (e: Leaflet.LeafletMouseEvent) => {
+      lat = e.latlng.lat;
+      lon = e.latlng.lng;
+      if (pickMarker) {
+        pickMarker.setLatLng(e.latlng);
+      } else {
+        pickMarker = L.marker(e.latlng, { draggable: true }).addTo(pickMap!);
+        pickMarker.on('dragend', () => {
+          const p = pickMarker!.getLatLng();
+          lat = p.lat;
+          lon = p.lng;
+        });
+      }
+      geoStatus = 'ok';
+    });
+  });
 
   let textCheck = $state<{ ok: boolean; reason?: string } | null>(null);
   let checking = $state(false);
@@ -116,6 +147,12 @@
     errorMsg = null;
     rejectedReason = null;
 
+    // 0. Standort muss gewählt sein (Karte oder GPS)
+    if (lat === null || lon === null) {
+      rejectedReason = t('report_location_required');
+      return;
+    }
+
     // 1. Text-Prüfung im Client (KI + Regeln)
     checking = true;
     const check = await checkText(title, description);
@@ -145,7 +182,6 @@
       const form = new FormData();
       form.set('title', title);
       form.set('description', description);
-      form.set('area', area);
       form.set('lat', String(lat ?? 0));
       form.set('lon', String(lon ?? 0));
       form.set('image', new File([processedBlob], 'photo.jpg', { type: 'image/jpeg' }));
@@ -218,18 +254,18 @@
 
     <fieldset>
       <legend>{t('report_location')}</legend>
+      <div bind:this={pickMapEl} class="pick-map"></div>
+      <p class="hint">{t('report_location_pick')}</p>
       <button type="button" onclick={useGps} disabled={geoStatus === 'loading'}>
         {geoStatus === 'loading' ? '…' : t('report_location_auto')}
       </button>
       {#if geoStatus === 'ok'}
-        <p class="hint">GPS: {lat?.toFixed(5)}, {lon?.toFixed(5)}</p>
+        <p class="hint">
+          {t('report_location_set')} {lat?.toFixed(5)}, {lon?.toFixed(5)}
+        </p>
       {:else if geoStatus === 'error'}
         <p class="error">{t('geolocation_error')}</p>
       {/if}
-      <label>
-        {t('report_area')}
-        <input type="text" maxlength="80" bind:value={area} placeholder={t('report_area_placeholder')} required />
-      </label>
     </fieldset>
 
     {#if rejectedReason}
@@ -268,6 +304,11 @@
   fieldset {
     border: 1px solid var(--border);
     border-radius: 6px;
+  }
+  .pick-map {
+    height: 320px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
   }
   .preview-wrap {
     position: relative;

@@ -7,7 +7,6 @@
   let loading = $state(true);
   let error = $state<string | null>(null);
 
-  let areaFilter = $state('');
   let sort = $state<'score' | 'new' | 'votes'>('score');
   let openOnly = $state(true);
 
@@ -16,7 +15,6 @@
     error = null;
     try {
       const params = new URLSearchParams();
-      if (areaFilter.trim()) params.set('area', areaFilter.trim());
       params.set('sort', sort);
       if (openOnly) params.set('resolved', 'false');
       const res = await fetch(`/api/reports?${params}`);
@@ -32,7 +30,6 @@
 
   $effect(() => {
     // Neu laden, sobald sich ein Filter ändert
-    void areaFilter;
     void sort;
     void openOnly;
     load();
@@ -99,12 +96,6 @@
 <h1>{t('list_title')}</h1>
 
 <div class="filters">
-  <input
-    type="text"
-    placeholder={t('filter_area')}
-    bind:value={areaFilter}
-    oninput={() => load()}
-  />
   <label class="checkbox">
     <input type="checkbox" bind:checked={openOnly} />
     {t('filter_open')}
@@ -131,7 +122,8 @@
           <h3>{report.title}</h3>
           <p>{report.description}</p>
           <p class="meta">
-            {report.area} · {new Date(report.created_at + 'Z').toLocaleString()} ·
+            {report.lat.toFixed(4)}, {report.lon.toFixed(4)} ·
+            {new Date(report.created_at + 'Z').toLocaleString()} ·
             {t('score_label')}: {report.score.toFixed(1)}
             {#if report.resolved}
               <span class="badge">{t('resolved_badge')}</span>

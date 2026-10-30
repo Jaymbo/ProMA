@@ -6,7 +6,6 @@ export interface ReportDto {
   image: string;
   lat: number;
   lon: number;
-  area: string;
   upvotes: number;
   downvotes: number;
   score: number;

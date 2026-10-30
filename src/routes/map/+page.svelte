@@ -45,7 +45,7 @@
       <h3>{selected.title}</h3>
       <p>{selected.description}</p>
       <p class="meta">
-        {selected.area} · {t('score_label')}: {selected.score.toFixed(1)} ·
+        {selected.lat.toFixed(4)}, {selected.lon.toFixed(4)} · {t('score_label')}: {selected.score.toFixed(1)} ·
         👍 {selected.upvotes} 👎 {selected.downvotes}
         {#if selected.resolved}
           <span class="badge">{t('resolved_badge')}</span>

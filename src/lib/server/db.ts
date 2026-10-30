@@ -18,7 +18,6 @@ db.exec(`
     image_path    TEXT    NOT NULL,
     lat           REAL    NOT NULL,
     lon           REAL    NOT NULL,
-    area          TEXT    NOT NULL,
     upvotes       INTEGER NOT NULL DEFAULT 0,
     downvotes     INTEGER NOT NULL DEFAULT 0,
     resolved      INTEGER NOT NULL DEFAULT 0,
@@ -66,10 +65,18 @@ db.exec(`
     PRIMARY KEY (ip_hash, action, window)
   );
 
-  CREATE INDEX IF NOT EXISTS idx_reports_area ON reports(area);
   CREATE INDEX IF NOT EXISTS idx_reports_created ON reports(created_at);
   CREATE INDEX IF NOT EXISTS idx_votes_report ON votes(report_id);
 `);
+
+// Migration: area-Spalte entfernen (Standort jetzt nur via Karte/GPS-Koordinaten)
+try {
+  // Wichtig: Index VOR der Spalte löschen, sonst schlägt DROP COLUMN fehl
+  db.exec('DROP INDEX IF EXISTS idx_reports_area');
+  db.exec('ALTER TABLE reports DROP COLUMN area');
+} catch {
+  // Spalte existiert nicht mehr – nichts zu tun
+}
 
 import crypto from 'node:crypto';
 

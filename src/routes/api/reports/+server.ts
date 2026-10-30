@@ -13,7 +13,6 @@ import {
 // ReportDto kommt aus #lib/shared/types
 
 export const GET: RequestHandler = async ({ url }) => {
-  const area = url.searchParams.get('area')?.trim() || null;
   const sort = url.searchParams.get('sort') ?? 'score';
   const resolvedParam = url.searchParams.get('resolved'); // 'false' => nur offene
   const limit = Math.min(Number(url.searchParams.get('limit')) || 100, 200);
@@ -22,10 +21,6 @@ export const GET: RequestHandler = async ({ url }) => {
   const where = ['hidden = 0'];
   const params: (string | number)[] = [];
   if (resolvedParam === 'false') where.push('resolved = 0');
-  if (area) {
-    where.push('area LIKE ?');
-    params.push(`%${area}%`);
-  }
 
   const orderBy =
     sort === 'new'
@@ -38,7 +33,7 @@ export const GET: RequestHandler = async ({ url }) => {
   params.push(limit, offset);
   const rows = db
     .prepare(
-      `SELECT id, title, description, image_path, lat, lon, area, upvotes, downvotes,
+      `SELECT id, title, description, image_path, lat, lon, upvotes, downvotes,
               resolved, flags, created_at
        FROM reports WHERE ${where.join(' AND ')}
        ORDER BY ${orderBy}
@@ -53,7 +48,6 @@ export const GET: RequestHandler = async ({ url }) => {
     image: `/uploads/${r.image_path}`,
     lat: r.lat as number,
     lon: r.lon as number,
-    area: r.area as string,
     upvotes: r.upvotes as number,
     downvotes: r.downvotes as number,
     score: importanceScore(r.upvotes as number, r.downvotes as number, r.created_at as string),
@@ -71,12 +65,8 @@ export const POST: RequestHandler = async ({ request }) => {
   const description = String(form.get('description') ?? '').trim();
   const lat = Number(form.get('lat'));
   const lon = Number(form.get('lon'));
-  const area = String(form.get('area') ?? '').trim();
   const image = form.get('image');
 
-  if (!area || area.length > 80) {
-    return new Response('Gebiet fehlt oder zu lang (max. 80)', { status: 400 });
-  }
   if (
     !Number.isFinite(lat) ||
     !Number.isFinite(lon) ||
@@ -101,10 +91,10 @@ export const POST: RequestHandler = async ({ request }) => {
   const imagePath = await saveImage(image as File, 'report');
   const result = db
     .prepare(
-      `INSERT INTO reports (title, description, image_path, lat, lon, area)
-       VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO reports (title, description, image_path, lat, lon)
+       VALUES (?, ?, ?, ?, ?)`
     )
-    .run(title, description, imagePath, lat, lon, area);
+    .run(title, description, imagePath, lat, lon);
 
   return Response.json({ ok: true, id: Number(result.lastInsertRowid) }, { status: 201 });
 };
