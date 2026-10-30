@@ -1,0 +1,14 @@
+services:
+  proma:
+    build: .
+    container_name: proma
+    restart: unless-stopped
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+    ports:
+      - "3210:3000"
+    volumes:
+      # Daten außerhalb des Containers – überleben Rebuilds/Neustarts
+      - ./data:/app/data
+      - ./uploads:/app/uploads
